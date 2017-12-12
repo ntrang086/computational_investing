@@ -10,7 +10,6 @@ def compute_stock_return(alpha, beta, market_return):
     alpha: A measure of the active return on a stock    
     beta: A measure of the risk arising from exposure to general market (e.g. SP500) movements
     market_return: Return rate of the market (e.g. SP500) on a particular day
-    position_type: String "long" or "short"
 
     Returns: 
     stock_return: Return rate of the stock on a particular day
@@ -34,6 +33,22 @@ def compute_portfolio_return(weights, alphas, betas, market_return):
     portfolio_return: Return rate of the stock on a particular day
     """
     portfolio_return = sum([(betas[i] * market_return + alphas[i]) * weights[i] for i in range(len(weights))])
+    return portfolio_return
+
+
+def compute_portfolio_return2(weights, stock_returns):
+    """
+    Compute portfolio return when having weights and stock returns
+    portfolio_return = sum([stock_return * stock_weight for each stock in portfolio])
+    
+    Parameters:
+    weights: A list of weights for stocks in the portfolio
+    stock_returns: A list of returns for stocks in the portfolio
+
+    Returns: 
+    portfolio_return: Return rate of the stock on a particular day
+    """
+    portfolio_return = sum([weights[i] * stock_returns[i] for i in range(len(weights))])
     return portfolio_return
 
 
@@ -64,10 +79,15 @@ def test_run():
     return_B_dollar = return_B * position_B
 
     portfolio_return = compute_portfolio_return([0.5, -0.5], [alpha_A, alpha_B], [beta_A, beta_B], market_return)
+    try:
+        assert (portfolio_return == compute_portfolio_return2([0.5, -0.5], [return_A, return_B]))
+    except AssertionError:
+        print ("We have a problem with compute_stock_return")
 
     print ("Stock A's return in % = {:.0%}, in dollars = {}".format(return_A, return_A_dollar))
     print ("Stock B's return in % = {:.0%}, in dollars = {}".format(return_B, return_B_dollar))
     print ("Portfolio return in % = {:.0%}, in dollars = {}".format(portfolio_return, return_A_dollar + return_B_dollar))
+
     
 if __name__ == "__main__":
     test_run()
