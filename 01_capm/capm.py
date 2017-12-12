@@ -1,7 +1,7 @@
 """An example of how to use Capital Asset Pricing Model (CAPM)"""
 
 
-def compute_stock_return(alpha, beta, market_return, position_type="long"):
+def compute_stock_return(alpha, beta, market_return):
     """
     Compute stock return using the CAPM equation
     stock_return = beta * market_return + alpha
@@ -16,10 +16,7 @@ def compute_stock_return(alpha, beta, market_return, position_type="long"):
     stock_return: Return rate of the stock on a particular day
     """
     stock_return = beta * market_return + alpha
-    if position_type == "long":
-    	return stock_return
-    else:
-    	return -stock_return
+    return stock_return
 
 
 def compute_portfolio_return(weights, alphas, betas, market_return):
@@ -56,13 +53,13 @@ def test_run():
 
     alpha_B = -0.01
     beta_B = 2.0
-    position_B = 50.0
+    position_B = -50.0
 
     market_return = 0.1
 
     # Calculate stock A return
     return_A = compute_stock_return(alpha_A, beta_A, market_return)
-    return_B = compute_stock_return(alpha_B, beta_B, market_return, position_type="short")
+    return_B = compute_stock_return(alpha_B, beta_B, market_return)
     return_A_dollar = return_A * position_A
     return_B_dollar = return_B * position_B
 
