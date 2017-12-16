@@ -40,16 +40,26 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
 
     # Create a dataframe that represents changes in the number of shares by day for each asset. 
     # It has the same structure as df_prices, and is initially filled with zeros
-    df_trades = pd.DataFrame(data=np.zeros((df_prices.shape)), index=df_prices.index, columns=df_prices.columns)
+    df_trades = pd.DataFrame(np.zeros((df_prices.shape)), df_prices.index, df_prices.columns)
     #print (orders_df)
     for index, row in orders_df.iterrows():
-        df_trades.loc[index, row["Symbol"]] = row["Shares"]
         if row["Order"] == "BUY":
+            df_trades.loc[index, row["Symbol"]] = row["Shares"]
             df_trades.loc[index, "cash"] = df_prices.loc[index, row["Symbol"]] * row["Shares"] * (-1.0)
         else:
+            df_trades.loc[index, row["Symbol"]] = -row["Shares"]
             df_trades.loc[index, "cash"] = df_prices.loc[index, row["Symbol"]] * row["Shares"]
 
-    #print (df_trades)
+    # Create a dataframe that represents on each particular day how much of each asset we are holding
+    # It has the same structure as df_prices, and is initially filled with zeros
+    df_holdings = pd.DataFrame(np.zeros((df_prices.shape)), df_prices.index, df_prices.columns)
+    for row_count in range(len(df_holdings)):
+        if row_count == 0:
+            df_holdings.iloc[0, :-1] = df_trades.iloc[0, :-1].copy()
+            df_holdings.iloc[0, -1] = df_trades.iloc[0, -1] + start_val
+        else:
+            df_holdings.iloc[row_count] = df_holdings.iloc[row_count-1] + df_trades.iloc[row_count]
+        row_count += 1
 
     # Dummy portvals
     portvals = pd.DataFrame(index=df_prices.index, data=df_prices.iloc[:, 0].as_matrix())
