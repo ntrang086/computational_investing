@@ -20,11 +20,26 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
 
     # In the template, instead of computing the value of the portfolio, we just
     # read in the value of IBM over 6 months
-    start_date = dt.datetime(2008,1,1)
-    end_date = dt.datetime(2008,6,1)
-    portvals = get_data(['IBM'], pd.date_range(start_date, end_date))
-    portvals = portvals[['IBM']]  # remove SPY
-    portvals = pd.DataFrame(index=portvals.index, data=portvals.as_matrix())
+    #portvals = pd.DataFrame.from_csv(orders_file)
+    orders_df = pd.read_csv(orders_file, index_col='Date', parse_dates=True, na_values=['nan'])
+
+    # Sort the orders_df by index, i.e the date column
+    orders_df.sort_index(ascending=True, inplace=True)
+    
+    start_date = orders_df.index.min()
+    end_date = orders_df.index.max()
+    symbols = orders_df.Symbol.unique()
+
+    # Create a dataframe with adjusted close prices for the symbols
+    df_prices = get_data(symbols, pd.date_range(start_date, end_date), addSPY=False)
+
+    # Add a column for adjusted close price for cash, which is $1
+    df_prices["cash"] = 1.0
+    #print (df_prices)
+
+    # Dummy portvals
+    portvals = pd.DataFrame(index=df_prices.index, data=df_prices.iloc[:, 0].as_matrix())
+    print (portvals)
 
     return portvals
 
@@ -33,11 +48,12 @@ def test_code():
     # This is a helper function to test the above code
     
     # Define input parameters
-    of = "./orders/orders.csv"
+    of = "./orders/orders-short.csv"
     sv = 1000000
 
     # Process orders
     portvals = compute_portvals(orders_file = of, start_val = sv)
+    print (portvals)
     if isinstance(portvals, pd.DataFrame):
         portvals = portvals[portvals.columns[0]] # just get the first column
     else:
