@@ -32,10 +32,24 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
 
     # Create a dataframe with adjusted close prices for the symbols
     df_prices = get_data(symbols, pd.date_range(start_date, end_date), addSPY=False)
+    df_prices.dropna(inplace=True)
 
     # Add a column for adjusted close price for cash, which is $1
     df_prices["cash"] = 1.0
     #print (df_prices)
+
+    # Create a dataframe that represents changes in the number of shares by day for each asset. 
+    # It has the same structure as df_prices, and is initially filled with zeros
+    df_trades = pd.DataFrame(data=np.zeros((df_prices.shape)), index=df_prices.index, columns=df_prices.columns)
+    #print (orders_df)
+    for index, row in orders_df.iterrows():
+        df_trades.loc[index, row["Symbol"]] = row["Shares"]
+        if row["Order"] == "BUY":
+            df_trades.loc[index, "cash"] = df_prices.loc[index, row["Symbol"]] * row["Shares"] * (-1.0)
+        else:
+            df_trades.loc[index, "cash"] = df_prices.loc[index, row["Symbol"]] * row["Shares"]
+
+    #print (df_trades)
 
     # Dummy portvals
     portvals = pd.DataFrame(index=df_prices.index, data=df_prices.iloc[:, 0].as_matrix())
