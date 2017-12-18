@@ -5,6 +5,7 @@ import numpy as np
 import datetime as dt
 import os
 from util import get_data, plot_data
+from analysis import get_portfolio_value, get_portfolio_stats
 
 def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, commission=9.95, impact=0.005):
     """
@@ -42,12 +43,13 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
         transaction_cost = commission + impact * traded_share_value
 
         # Update the number of shares and cash based on the type of transaction done
+        # Note: The same asset may be traded more than once on a particular day
         if row["Order"] == "BUY":
-            df_trades.loc[index, row["Symbol"]] = row["Shares"]            
-            df_trades.loc[index, "cash"] = traded_share_value * (-1.0) - transaction_cost
+            df_trades.loc[index, row["Symbol"]] = df_trades.loc[index, row["Symbol"]] + row["Shares"]
+            df_trades.loc[index, "cash"] = df_trades.loc[index, "cash"] + traded_share_value * (-1.0) - transaction_cost
         else:
-            df_trades.loc[index, row["Symbol"]] = -row["Shares"]
-            df_trades.loc[index, "cash"] = traded_share_value - transaction_cost
+            df_trades.loc[index, row["Symbol"]] = df_trades.loc[index, row["Symbol"]] -row["Shares"]
+            df_trades.loc[index, "cash"] = df_trades.loc[index, "cash"] + traded_share_value - transaction_cost
 
     # Create a dataframe that represents on each particular day how much of each asset in the portfolio
     # It has the same structure as df_prices, and is initially filled with zeros
@@ -64,9 +66,9 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
 
     # Create a dataframe that represents the monetary value of each asset in the portfolio
     df_value = df_prices * df_holdings
-
+    
     # Create portvals dataframe
-    portvals = pd.DataFrame(df_value.sum(axis=1), df_value.index)
+    portvals = pd.DataFrame(df_value.sum(axis=1), df_value.index, ["port_val"])
     return portvals
 
 
@@ -74,39 +76,41 @@ def test_code():
     # This is a helper function to test the above code
     
     # Define input parameters
-    of = "./orders/orders-short.csv"
+    of = "./orders/orders.csv"
     sv = 1000000
 
     # Process orders
     portvals = compute_portvals(orders_file = of, start_val = sv)
-    print (portvals)
-    if isinstance(portvals, pd.DataFrame):
-        portvals = portvals[portvals.columns[0]] # just get the first column
-    else:
-        "warning, code did not return a DataFrame"
+    if not isinstance(portvals, pd.DataFrame):
+        print ("warning, code did not return a DataFrame")
     
     # Get portfolio stats
-    start_date = dt.datetime(2011,1,10)
-    end_date = dt.datetime(2011,12,20)
-    cum_ret, avg_daily_ret, std_daily_ret, sharpe_ratio = [0.2,0.01,0.02,1.5]
-    cum_ret_SPY, avg_daily_ret_SPY, std_daily_ret_SPY, sharpe_ratio_SPY = [0.2,0.01,0.02,1.5]
+    cum_ret, avg_daily_ret, std_daily_ret, sharpe_ratio = get_portfolio_stats(portvals, daily_rf=0.0, 
+                                                                                samples_per_year=252.0)
+    
+    # Get the stats for $SPX for the same date range for comparison
+    start_date = portvals.index.min()
+    end_date = portvals.index.max()
+    SPX_prices = get_data(["$SPX"], pd.date_range(start_date, end_date), addSPY=False)
+    cum_ret_SPX, avg_daily_ret_SPX, std_daily_ret_SPX, sharpe_ratio_SPX = get_portfolio_stats(SPX_prices, 
+                                                                            daily_rf=0.0, samples_per_year=252.0)
 
     # Compare portfolio against $SPX
     print ("Date Range: {} to {}".format(start_date, end_date))
     print ()
     print ("Sharpe Ratio of Fund: {}".format(sharpe_ratio))
-    print ("Sharpe Ratio of SPY : {}".format(sharpe_ratio_SPY))
+    print ("Sharpe Ratio of $SPX : {}".format(sharpe_ratio_SPX))
     print ()
     print ("Cumulative Return of Fund: {}".format(cum_ret))
-    print ("Cumulative Return of SPY : {}".format(cum_ret_SPY))
+    print ("Cumulative Return of $SPX : {}".format(cum_ret_SPX))
     print ()
     print ("Standard Deviation of Fund: {}".format(std_daily_ret))
-    print ("Standard Deviation of SPY : {}".format(std_daily_ret_SPY))
+    print ("Standard Deviation of $SPX : {}".format(std_daily_ret_SPX))
     print ()
     print ("Average Daily Return of Fund: {}".format(avg_daily_ret))
-    print ("Average Daily Return of SPY : {}".format(avg_daily_ret_SPY))
+    print ("Average Daily Return of $SPX : {}".format(avg_daily_ret_SPX))
     print ()
-    print ("Final Portfolio Value: {}".format(portvals[-1]))
+    print ("Final Portfolio Value: {}".format(portvals.iloc[-1, -1]))
 
 if __name__ == "__main__":
     test_code()

@@ -80,7 +80,6 @@ def get_portfolio_value(prices, allocs, sv):
 
     # Get daily portfolio value
     port_val = pos_vals.sum(axis=1).to_frame()
-    port_val.columns = ["port_val"]
 
     return port_val
 
@@ -89,7 +88,7 @@ def get_portfolio_stats(port_val, daily_rf, samples_per_year):
     """Helper function to compute portfolio statistics
 
     Parameters:
-    port_val: Portfolio value
+    port_val: A dataframe object showing the portfolio value for each day
     daily_rf: Daily risk-free rate, assuming it does not change
     samples_per_year: Sampling frequency per year
     
@@ -102,8 +101,8 @@ def get_portfolio_stats(port_val, daily_rf, samples_per_year):
     cr = port_val.iloc[-1, 0]/port_val.iloc[0, 0] - 1
 
     daily_returns = compute_daily_returns(port_val)[1:]
-    adr = daily_returns["port_val"].mean()
-    sddr = daily_returns["port_val"].std()
+    adr = daily_returns.iloc[:, 0].mean()
+    sddr = daily_returns.iloc[:, 0].std()
     sr = compute_sharpe_ratio(np.sqrt(samples_per_year), adr, daily_rf, sddr)
 
     return cr, adr, sddr, sr
