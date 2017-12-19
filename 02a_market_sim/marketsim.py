@@ -5,7 +5,7 @@ import numpy as np
 import datetime as dt
 import os
 from util import get_data, plot_data
-from analysis import get_portfolio_value, get_portfolio_stats
+from analysis import get_portfolio_value, get_portfolio_stats, plot_normalized_data
 
 def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, commission=9.95, impact=0.005):
     """
@@ -91,7 +91,7 @@ def test_code():
     # Get the stats for $SPX for the same date range for comparison
     start_date = portvals.index.min()
     end_date = portvals.index.max()
-    SPX_prices = get_data(["$SPX"], pd.date_range(start_date, end_date), addSPY=False)
+    SPX_prices = get_data(["$SPX"], pd.date_range(start_date, end_date), addSPY=False).dropna()
     cum_ret_SPX, avg_daily_ret_SPX, std_daily_ret_SPX, sharpe_ratio_SPX = get_portfolio_stats(SPX_prices, 
                                                                             daily_rf=0.0, samples_per_year=252.0)
 
@@ -111,6 +111,10 @@ def test_code():
     print ("Average Daily Return of $SPX : {}".format(avg_daily_ret_SPX))
     print ()
     print ("Final Portfolio Value: {}".format(portvals.iloc[-1, -1]))
+
+    # Plot the data
+    plot_normalized_data(SPX_prices.join(portvals), "Portfolio vs. SPX", "Date", "Normalized prices")
+
 
 if __name__ == "__main__":
     test_code()
