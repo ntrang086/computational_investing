@@ -4,8 +4,12 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 import os
-from ml_trading.analyze_financial_data import README
 from analysis import get_portfolio_value, get_portfolio_stats, plot_normalized_data
+import sys
+# Append the path of the directory one level above the current directory to import util
+sys.path.append('../')
+from util import *
+
 
 def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, commission=9.95, impact=0.005):
     """
