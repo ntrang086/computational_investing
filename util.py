@@ -2,7 +2,9 @@
 
 import os
 import pandas as pd
+import datetime as dt
 import matplotlib.pyplot as plt
+
 
 def symbol_to_path(symbol, base_dir=os.path.join("../..", "data")):
     """Return CSV file path given ticker symbol."""
@@ -58,3 +60,51 @@ def plot_data(df, title="Stock prices", xlabel="Date", ylabel="Price"):
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     plt.show()
+
+
+def load_txt_data(dirpath, filename):
+    """ Load the data from a txt file and store them as a numpy array
+
+    Parameters:
+    dirpath: The path to the directory where the file is stored
+    filename: The name of the file in the dirpath
+    
+    Returns:
+    np_data: A numpy array of the data
+    """
+
+    try:
+        filepath= os.path.join(dirpath, filename)
+    except KeyError:
+        print ("The file is missing")
+
+    np_data = np.loadtxt(filepath, dtype=str)
+
+    return np_data
+
+
+def get_exchange_days(start_date = dt.datetime(1964,7,5), end_date = dt.datetime(2020,12,31),
+    dirpath = "../data/dates_lists", filename="NYSE_dates.txt"):
+    """ Create a list of dates between start_date and end_date (inclusive) that correspond 
+    to the dates there was trading at an exchange. Default values are given based on NYSE.
+
+    Parameters:
+    start_date: First timestamp to consider (inclusive)
+    end_date: Last day to consider (inclusive)
+    dirpath: The path to the directory where the file is stored
+    filename: The name of the file in the dirpath
+    
+    Returns:
+    dates: A list of dates between start_date and end_date on which an exchange traded
+    """
+
+    # Load a text file located in the data folder that is 2 levels above the curernt directory
+
+    dates_str = load_txt_data(dirpath, filename)
+    all_dates_frome_file = [dt.datetime.strptime(date, "%m/%d/%Y") for date in dates_str]
+    df_all_dates = pd.Series(index=all_dates_frome_file, data=all_dates_frome_file)
+
+    selected_dates = [date for date in df_all_dates[start_date:end_date]]
+
+    return selected_dates
+
