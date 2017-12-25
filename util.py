@@ -2,6 +2,7 @@
 
 import os
 import pandas as pd
+import numpy as np
 import datetime as dt
 import matplotlib.pyplot as plt
 
@@ -98,8 +99,7 @@ def get_exchange_days(start_date = dt.datetime(1964,7,5), end_date = dt.datetime
     dates: A list of dates between start_date and end_date on which an exchange traded
     """
 
-    # Load a text file located in the data folder that is 2 levels above the curernt directory
-
+    # Load a text file located in dirpath
     dates_str = load_txt_data(dirpath, filename)
     all_dates_frome_file = [dt.datetime.strptime(date, "%m/%d/%Y") for date in dates_str]
     df_all_dates = pd.Series(index=all_dates_frome_file, data=all_dates_frome_file)
