@@ -108,3 +108,28 @@ def get_exchange_days(start_date = dt.datetime(1964,7,5), end_date = dt.datetime
 
     return selected_dates
 
+
+def get_data_as_dict(dates, symbols, keys):
+    """ Create a dictionary with types of data (Adj Close, Volume, etc.) as keys. Each value is 
+    a dataframe with symbols as columns and dates as rows
+
+    Parameters:
+    dates: A list of dates of interest
+    symbols: A list of symbols of interest
+    keys: A list of types of data of interest, e.g. Adj Close, Volume, etc.
+    
+    Returns:
+    data_dict: A dictionary whose keys are types of data, e.g. Adj Close, Volume, etc. and 
+    values are dataframes with dates as indices and symbols as columns
+    """
+
+    data_dict = {}
+    for key in keys:
+        df = pd.DataFrame(index=dates)
+        for symbol in symbols:
+            df_temp = pd.read_csv(symbol_to_path(symbol), index_col="Date",
+                    parse_dates=True, usecols=["Date", key], na_values=["nan"])
+            df_temp = df_temp.rename(columns={key: symbol})
+            df = df.join(df_temp) 
+        data_dict[key] = df
+    return data_dict
