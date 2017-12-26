@@ -12,7 +12,7 @@ sys.path.append('../')
 from util import *
 
 
-def detect_return_diff(symbols, data_dict, symbol_change=-0.05, market_change=0.02):
+def detect_return_diff(symbols, data_dict, symbol_change=-0.05, market_change=0.03):
     """ 
     Create the event dataframe. Here we are only interested in the opposite movements of 
     symbol and market, i.e. symbol_change and market_change are of opposite signs
@@ -55,6 +55,40 @@ def detect_return_diff(symbols, data_dict, symbol_change=-0.05, market_change=0.
                 print ("Here we are only interested in the opposite movements of symbol and market, \
                     i.e. you should ensure symbol_change and market_change are of opposite signs")
     return df_events
+
+
+def output_events_as_trades(df_events_input):
+    """
+    Create df_trades based on df_events_input. When an event occurs, buy 100 shares of 
+    the equity on that day; sell automatically 5 trading days later. The df_trades will be 
+    fed into a market simulator to execute trades and measure performance. For the final 
+    few events assume that we exit on the last day, so hold it less than 5 days
+    """
+    # Drop rows and columns where all elements are NAN
+    df_events = df_events_input.dropna(axis=0, how="all")
+    df_events = df_events.dropna(axis=1, how="all")
+    df_trades = pd.DataFrame(columns=["Date", "Symbol", "Order", "Shares"])
+    NYSE_dates = get_exchange_days(start_date=df_events.index.min(), 
+        end_date=df_events.index.max(), dirpath="../../data/dates_lists")
+        
+    for symbol in df_events.columns:
+        for date in df_events.index:
+            if df_events[symbol][date] == 1:
+                df_buy = pd.DataFrame([[date, symbol, "BUY", 100]], columns=df_trades.columns)
+                if NYSE_dates.index(date) + 5 >= len(NYSE_dates):
+                    sell_date_index = len(NYSE_dates) - 1
+                else:
+                    sell_date_index = NYSE_dates.index(date) + 5
+                df_sell = pd.DataFrame([[NYSE_dates[sell_date_index], symbol, "SELL", 100]], 
+                    columns=df_trades.columns)
+                df_trades = df_trades.append(df_buy)
+                df_trades = df_trades.append(df_sell)
+
+    df_trades.set_index("Date", inplace=True)
+    df_trades.sort_index(inplace=True)
+    df_trades.to_csv("df_trades.csv")
+
+    return df_trades
 
 
 def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_forward=20,
@@ -147,7 +181,7 @@ def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_for
 
 
 if __name__ == "__main__":
-    start_date = dt.datetime(2008, 1, 1)
+    start_date = dt.datetime(2009, 1, 1)
     end_date = dt.datetime(2009, 12, 31)
     dates = get_exchange_days(start_date, end_date, dirpath="../../data/dates_lists", 
         filename="NYSE_dates.txt")
@@ -158,7 +192,7 @@ if __name__ == "__main__":
     keys = ["Open", "High", "Low", "Adj Close", "Volume", "Close"]
     data_dict = get_data_as_dict(dates, symbols, keys)
 
-    # Fill nan values if any
+    # Fill NAN values if any
     for key in keys:
         data_dict[key] = data_dict[key].fillna(method="ffill")
         data_dict[key] = data_dict[key].fillna(method="bfill")
@@ -166,5 +200,7 @@ if __name__ == "__main__":
 
     df_events = detect_return_diff(symbols, data_dict)
     plot_return_diff_events(df_events, data_dict, num_backward=10, num_forward=10,
-                output_filename="event_chart.pdf", market_neutral=False, error_bars=True,
+                output_filename="event_chart.pdf", market_neutral=True, error_bars=True,
                 market_sym="SPY")
+    df_trades = output_events_as_trades(df_events)
+
