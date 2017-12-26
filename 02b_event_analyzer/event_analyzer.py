@@ -75,8 +75,8 @@ def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_for
     market_sym: Symbol of the market index
     
     Returns:
-    A pdf file plotting the means and standard deviations of the returns the date range of 
-    [num_backward, num_forward], including the event day
+    A pdf file plotting the means and standard deviations of the returns within the date 
+    range of [num_backward, num_forward], including the event day
     """
 
     df_events = df_events_input.copy()
@@ -116,7 +116,6 @@ def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_for
     if len(all_events_returns.shape) == 1:
         all_events_returns = np.expand_dims(all_events_returns, axis=0)
 
-    print (num_events, all_events_returns.shape)
     # Compute cumulative product returns
     all_events_returns = np.cumprod(all_events_returns + 1, axis=1)
 
@@ -139,10 +138,33 @@ def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_for
     plt.plot(x_axis_range, mean_returns, linewidth=3, label="mean", color="b")
     plt.xlim(-num_backward - 1, num_forward + 1)
     if market_neutral == True:
-        plt.title("Market relative mean return of {} events".format(num_events))
+        plt.title("Market-relative mean return of {} events".format(num_events))
     else:
         plt.title("Mean return of {} events".format(num_events))
     plt.xlabel("Days")
     plt.ylabel("Cumulative Returns")
     plt.savefig(output_filename, format="pdf")
 
+
+if __name__ == "__main__":
+    start_date = dt.datetime(2008, 1, 1)
+    end_date = dt.datetime(2009, 12, 31)
+    dates = get_exchange_days(start_date, end_date, dirpath="../../data/dates_lists", 
+        filename="NYSE_dates.txt")
+
+    symbols = load_txt_data(dirpath="../../data/symbols_lists", filename="sp5002012.txt").tolist()
+    symbols.append("SPY")
+
+    keys = ["Open", "High", "Low", "Adj Close", "Volume", "Close"]
+    data_dict = get_data_as_dict(dates, symbols, keys)
+
+    # Fill nan values if any
+    for key in keys:
+        data_dict[key] = data_dict[key].fillna(method="ffill")
+        data_dict[key] = data_dict[key].fillna(method="bfill")
+        data_dict[key] = data_dict[key].fillna(1.0)
+
+    df_events = detect_return_diff(symbols, data_dict)
+    plot_return_diff_events(df_events, data_dict, num_backward=10, num_forward=10,
+                output_filename="event_chart.pdf", market_neutral=False, error_bars=True,
+                market_sym="SPY")
