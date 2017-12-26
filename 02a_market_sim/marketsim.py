@@ -76,28 +76,38 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
     return portvals
 
 
-def test_code():
-    # This is a helper function to test the above code
-    
-    # Define input parameters
-    of = "./orders/orders.csv"
-    sv = 1000000
+def market_simulator(orders_file, start_val=1000000, daily_rf=0.0, samples_per_year=252.0):
+    """
+    This function takes in an orders file and execute trades based on the file
 
+    Parameters:
+    orders_file: The file whose orders will be execute
+    start_val: The starting cash in dollars
+    daily_rf: Daily risk-free rate, assuming it does not change
+    samples_per_year: Sampling frequency per year
+
+    Returns:
+    Print out final portfolio value of the portfolio, as well as Sharpe ratio, 
+    cumulative return, average daily return and standard deviation of the portfolio and $SPX.
+    Plot a chart of the portfolio and $SPX performances
+
+    """
+    
     # Process orders
-    portvals = compute_portvals(orders_file = of, start_val = sv)
+    portvals = compute_portvals(orders_file=orders_file, start_val=start_val)
     if not isinstance(portvals, pd.DataFrame):
         print ("warning, code did not return a DataFrame")
     
     # Get portfolio stats
-    cum_ret, avg_daily_ret, std_daily_ret, sharpe_ratio = get_portfolio_stats(portvals, daily_rf=0.0, 
-                                                                                samples_per_year=252.0)
+    cum_ret, avg_daily_ret, std_daily_ret, sharpe_ratio = get_portfolio_stats(portvals,
+     daily_rf=daily_rf, samples_per_year=samples_per_year)
     
     # Get the stats for $SPX for the same date range for comparison
     start_date = portvals.index.min()
     end_date = portvals.index.max()
     SPX_prices = get_data(["$SPX"], pd.date_range(start_date, end_date), addSPY=False).dropna()
-    cum_ret_SPX, avg_daily_ret_SPX, std_daily_ret_SPX, sharpe_ratio_SPX = get_portfolio_stats(SPX_prices, 
-                                                                            daily_rf=0.0, samples_per_year=252.0)
+    cum_ret_SPX, avg_daily_ret_SPX, std_daily_ret_SPX, sharpe_ratio_SPX = \
+    get_portfolio_stats(SPX_prices, daily_rf=daily_rf, samples_per_year=samples_per_year)
 
     # Compare portfolio against $SPX
     print ("Date Range: {} to {}".format(start_date, end_date))
@@ -121,4 +131,4 @@ def test_code():
 
 
 if __name__ == "__main__":
-    test_code()
+    market_simulator(orders_file="./orders/orders.csv")

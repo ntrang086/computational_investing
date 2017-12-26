@@ -63,7 +63,14 @@ def output_events_as_trades(df_events_input):
     the equity on that day; sell automatically 5 trading days later. The df_trades will be 
     fed into a market simulator to execute trades and measure performance. For the final 
     few events assume that we exit on the last day, so hold it less than 5 days
+
+    Parameters:
+    df_events_input: A dataframe filled with either 1's for detected events or NAN's for no events
+
+    Returns:
+    df_trades: A dataframe and a csv file to be used as input to market simulator
     """
+
     # Drop rows and columns where all elements are NAN
     df_events = df_events_input.dropna(axis=0, how="all")
     df_events = df_events.dropna(axis=1, how="all")
@@ -181,7 +188,7 @@ def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_for
 
 
 if __name__ == "__main__":
-    start_date = dt.datetime(2009, 1, 1)
+    start_date = dt.datetime(2008, 1, 1)
     end_date = dt.datetime(2009, 12, 31)
     dates = get_exchange_days(start_date, end_date, dirpath="../../data/dates_lists", 
         filename="NYSE_dates.txt")
@@ -199,8 +206,7 @@ if __name__ == "__main__":
         data_dict[key] = data_dict[key].fillna(1.0)
 
     df_events = detect_return_diff(symbols, data_dict)
-    plot_return_diff_events(df_events, data_dict, num_backward=10, num_forward=10,
+    plot_return_diff_events(df_events, data_dict, num_backward=20, num_forward=20,
                 output_filename="event_chart.pdf", market_neutral=True, error_bars=True,
                 market_sym="SPY")
     df_trades = output_events_as_trades(df_events)
-
