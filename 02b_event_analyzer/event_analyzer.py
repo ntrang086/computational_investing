@@ -71,22 +71,27 @@ def output_events_as_trades(df_events_input):
     df_trades: A dataframe and a csv file to be used as input to market simulator
     """
 
-    # Drop rows and columns where all elements are NAN
+    # Get the date range
+    date_range = get_exchange_days(start_date=df_events_input.index.min(), 
+        end_date=df_events_input.index.max(), dirpath="../../data/dates_lists")
+
+    # Make a copy of df_events_input and drop all-NAN rows and columns
+    # to save time iterating over df_events later
     df_events = df_events_input.dropna(axis=0, how="all")
     df_events = df_events.dropna(axis=1, how="all")
     df_trades = pd.DataFrame(columns=["Date", "Symbol", "Order", "Shares"])
-    NYSE_dates = get_exchange_days(start_date=df_events.index.min(), 
-        end_date=df_events.index.max(), dirpath="../../data/dates_lists")
         
     for symbol in df_events.columns:
         for date in df_events.index:
             if df_events[symbol][date] == 1:
                 df_buy = pd.DataFrame([[date, symbol, "BUY", 100]], columns=df_trades.columns)
-                if NYSE_dates.index(date) + 5 >= len(NYSE_dates):
-                    sell_date_index = len(NYSE_dates) - 1
+                # If the 5-day hold period is after the last date of the date_range, 
+                # we sell the asset on that last date
+                if date_range.index(date) + 5 >= len(date_range):
+                    sell_date_index = len(date_range) - 1
                 else:
-                    sell_date_index = NYSE_dates.index(date) + 5
-                df_sell = pd.DataFrame([[NYSE_dates[sell_date_index], symbol, "SELL", 100]], 
+                    sell_date_index = date_range.index(date) + 5
+                df_sell = pd.DataFrame([[date_range[sell_date_index], symbol, "SELL", 100]], 
                     columns=df_trades.columns)
                 df_trades = df_trades.append(df_buy)
                 df_trades = df_trades.append(df_sell)
@@ -205,8 +210,13 @@ if __name__ == "__main__":
         data_dict[key] = data_dict[key].fillna(method="bfill")
         data_dict[key] = data_dict[key].fillna(1.0)
 
+    # Detect events
     df_events = detect_return_diff(symbols, data_dict)
+
+    # Plot means and standard deviations of events
     plot_return_diff_events(df_events, data_dict, num_backward=20, num_forward=20,
                 output_filename="event_chart.pdf", market_neutral=True, error_bars=True,
                 market_sym="SPY")
+    
+    # Output the event as trades to be fed into marketsim
     df_trades = output_events_as_trades(df_events)
