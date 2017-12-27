@@ -30,12 +30,17 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
     # Get the start and end dates and symbols
     start_date = orders_df.index.min()
     end_date = orders_df.index.max()
-    symbols = orders_df.Symbol.unique()
+    symbols = orders_df.Symbol.unique().tolist()
 
     # Create a dataframe with adjusted close prices for the symbols and for cash
-    df_prices = get_data(symbols, pd.date_range(start_date, end_date), addSPY=False)
-    df_prices.dropna(inplace=True)
+    df_prices = get_data(symbols, pd.date_range(start_date, end_date), addSPY=True)
+    del df_prices["SPY"]
     df_prices["cash"] = 1.0
+
+    # Fill NAN values if any
+    df_prices.fillna(method="ffill", inplace=True)
+    df_prices.fillna(method="bfill", inplace=True)
+    df_prices.fillna(1.0, inplace=True)
 
     # Create a dataframe that represents changes in the number of shares by day for each asset. 
     # It has the same structure as df_prices, and is initially filled with zeros
@@ -131,4 +136,5 @@ def market_simulator(orders_file, start_val=1000000, daily_rf=0.0, samples_per_y
 
 
 if __name__ == "__main__":
-    market_simulator(orders_file="./orders/orders.csv")
+    #market_simulator(orders_file="./orders/orders.csv")
+    market_simulator(orders_file="../02b_event_analyzer/df_trades.csv")
