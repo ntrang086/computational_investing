@@ -103,11 +103,11 @@ def output_events_as_trades(df_events_input):
     return df_trades
 
 
-def plot_return_diff_events(df_events_input, data_dict, num_backward=20, num_forward=20,
+def plot_events(df_events_input, data_dict, num_backward=20, num_forward=20,
                 output_filename="event_chart", market_neutral=True, error_bars=True,
                 market_sym="SPY"):
     """ 
-    Plot a chart of the events found by detect_return_diff
+    Plot a chart for the events found by an event detector
 
     Parameters:
     df_events_input: A dataframe filled with 1's for detected events or NAN's for no events
@@ -214,7 +214,7 @@ if __name__ == "__main__":
     df_events = detect_return_diff(symbols, data_dict)
 
     # Plot means and standard deviations of events
-    plot_return_diff_events(df_events, data_dict, num_backward=20, num_forward=20,
+    plot_events(df_events, data_dict, num_backward=20, num_forward=20,
                 output_filename="event_chart.pdf", market_neutral=True, error_bars=True,
                 market_sym="SPY")
     
