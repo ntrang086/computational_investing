@@ -24,3 +24,21 @@ def get_bollinger_bands(rolling_mean, rolling_std, num_std=2):
     upper_band = rolling_mean + rolling_std * num_std
     lower_band = rolling_mean - rolling_std * num_std
     return upper_band, lower_band
+
+
+def compute_bollinger_value(price, rolling_mean, rolling_std):
+    """
+    Output a value indicating how many standard deviations a price is from the mean
+
+    Parameters:
+    price: Price, typically adjusted close price, series of a symbol
+    rolling_mean: Rolling mean of a series
+    rolling_std: Rolling std of a series
+
+    Returns:
+    bollinger_val: the number of standard deviations a price is from the mean
+    """
+
+    bollinger_val = (price - rolling_mean) / rolling_std
+    return bollinger_val
+
