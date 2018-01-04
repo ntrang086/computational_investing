@@ -170,5 +170,31 @@ def detect_bollinger(symbols, data_dict, window=20,
 
 
 if __name__ == "__main__":
+    # Plot Bollinger bands and values for Google
     plot_bollinger("GOOG", dt.datetime(2010, 1, 1), dt.datetime(2010, 12, 31))
 
+    start_date = dt.datetime(2008, 1, 1)
+    end_date = dt.datetime(2009, 12, 31)
+    dates = get_exchange_days(start_date, end_date, dirpath="../../data/dates_lists", 
+        filename="NYSE_dates.txt")
+
+    symbols = load_txt_data(dirpath="../../data/symbols_lists", filename="sp5002012.txt").tolist()
+    symbols.append("SPY")
+
+    keys = ["Open", "High", "Low", "Adj Close", "Volume", "Close"]
+    data_dict = get_data_as_dict(dates, symbols, keys)
+
+    # Fill NAN values if any
+    for key in keys:
+        data_dict[key] = data_dict[key].fillna(method="ffill")
+        data_dict[key] = data_dict[key].fillna(method="bfill")
+        data_dict[key] = data_dict[key].fillna(1.0)
+
+    # Detect events
+    df_events = detect_bollinger(symbols, data_dict)
+
+    # Plot means and standard deviations of events
+    plot_events(df_events, data_dict, num_backward=20, num_forward=20,
+                output_filename="bollinger_event_chart.pdf", market_neutral=True, error_bars=True,
+                market_sym="SPY")
+    
