@@ -3,6 +3,7 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+import copy
 import sys
 # Append the path of the directory one level above the current directory to import util
 sys.path.append("../")
@@ -99,5 +100,75 @@ def plot_bollinger(symbol, start_date, end_date, window=20, num_std=1):
     plt.show()
 
 
+def detect_bollinger(symbols, data_dict, window=20, 
+    symbol_bv_change=-2.0, market_bv_change=1.0):
+    """ 
+    Create the event dataframe based on changes in Bollinger values. Here we are only 
+    interested in the opposite movements of symbol and market, i.e. symbol_bv_change 
+    and market_bv_change are of opposite signs
+
+    Parameters:
+    symbols: A list of symbols of interest
+    data_dict: A dictionary whose keys are types of data, e.g. Adj Close, Volume, etc. and 
+    values are dataframes with dates as indices and symbols as columns
+    window: Number of days to look back for rolling_mean and rolling_std
+    symbol_bv_change: Change in the Bollinger value of symbol
+    market_bv_change: Change in the Bollinger value of market
+    
+    Returns:
+    df_events: A dataframe filled with either 1's for detected events or NAN's for no events
+    """
+
+    df_close = data_dict["Adj Close"]
+    market_close = df_close["SPY"]
+
+    # Create a dataframe filled with NAN's
+    df_events = copy.deepcopy(df_close)
+    df_events = df_events * np.NAN
+
+    # Dates for the event range
+    dates = df_close.index
+
+    # Compute rolling mean for market
+    market_rm = market_close.rolling(window=window).mean()
+
+    # Compute rolling standard deviation for market
+    market_rstd = market_close.rolling(window=window).std()
+
+    # Compute Bollinger value for market
+    market_bv = compute_bollinger_value(market_close, market_rm, market_rstd)
+
+    for symbol in symbols:
+        # Compute rolling mean for symbol
+        symbol_rm = df_close[symbol].rolling(window=window).mean()
+
+        # Compute rolling standard deviation for symbol
+        symbol_rstd = df_close[symbol].rolling(window=window).std()
+
+        # Compute Bollinger value for symbol
+        symbol_bv = compute_bollinger_value(df_close[symbol], symbol_rm, symbol_rstd)
+
+        for i in range(window, len(dates)):
+            # Get the Bollinger values today and yesterday
+            symbol_bv_yesterday = symbol_bv.loc[dates[i - 1]]
+            symbol_bv_today = symbol_bv.loc[dates[i]]
+            market_bv_today = market_bv.loc[dates[i]]
+
+            # Event is found if both the symbol and market cross their respective thresholds
+            if symbol_bv_change < 0 and market_bv_change > 0:
+                if symbol_bv_yesterday >= symbol_bv_change and \
+                symbol_bv_today <= symbol_bv_change and market_bv_today >= market_bv_change:
+                    df_events[symbol].loc[dates[i]] = 1
+            elif symbol_bv_change > 0 and market_bv_change < 0:
+                if symbol_bv_yesterday <= symbol_bv_change and \
+                symbol_bv_today >= symbol_bv_change and market_bv_today <= market_bv_change:
+                    df_events[symbol].loc[dates[i]] = 1
+            else:
+                print ("Here we are only interested in the opposite movements of symbol and market, \
+                    i.e. you should ensure symbol_bv_change and market_bv_change are of opposite signs")
+    return df_events
+
+
 if __name__ == "__main__":
     plot_bollinger("GOOG", dt.datetime(2010, 1, 1), dt.datetime(2010, 12, 31))
+
