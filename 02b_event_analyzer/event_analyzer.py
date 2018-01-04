@@ -57,7 +57,7 @@ def detect_return_diff(symbols, data_dict, symbol_change=-0.05, market_change=0.
     return df_events
 
 
-def output_events_as_trades(df_events_input):
+def output_events_as_trades(df_events_input, output_filename="df_trades.csv"):
     """
     Create df_trades based on df_events_input. When an event occurs, buy 100 shares of 
     the equity on that day; sell automatically 5 trading days later. The df_trades will be 
@@ -66,6 +66,7 @@ def output_events_as_trades(df_events_input):
 
     Parameters:
     df_events_input: A dataframe filled with either 1's for detected events or NAN's for no events
+    output_filename: Name of output file
 
     Returns:
     df_trades: A dataframe and a csv file to be used as input to market simulator
@@ -98,7 +99,7 @@ def output_events_as_trades(df_events_input):
 
     df_trades.set_index("Date", inplace=True)
     df_trades.sort_index(inplace=True)
-    df_trades.to_csv("df_trades.csv")
+    df_trades.to_csv(output_filename)
 
     return df_trades
 
@@ -219,4 +220,4 @@ if __name__ == "__main__":
                 market_sym="SPY")
     
     # Output the event as trades to be fed into marketsim
-    df_trades = output_events_as_trades(df_events)
+    df_trades = output_events_as_trades(df_events, "df_trades.csv")
