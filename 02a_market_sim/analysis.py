@@ -111,14 +111,14 @@ def get_portfolio_stats(port_val, daily_rf, samples_per_year):
     return cr, adr, sddr, sr
 
 
-def plot_normalized_data(df, title, xlabel, ylabel):
+def plot_normalized_data(df, title, xlabel, ylabel, save_fig=False, fig_name="plot.png"):
     """Helper function to normalize and plot data"""
 
     # Normalize the data
     df = normalize_data(df)
 
     # Plot the normalized data
-    plot_data(df, title=title, xlabel=xlabel, ylabel=ylabel)
+    plot_data(df, title=title, xlabel=xlabel, ylabel=ylabel, save_fig=save_fig, fig_name=fig_name)
 
 
 def test_code():
