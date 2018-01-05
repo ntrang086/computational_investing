@@ -81,7 +81,8 @@ def compute_portvals(orders_file = "./orders/orders.csv", start_val = 1000000, c
     return portvals
 
 
-def market_simulator(orders_file, start_val=1000000, daily_rf=0.0, samples_per_year=252.0):
+def market_simulator(orders_file, start_val=1000000, daily_rf=0.0, samples_per_year=252.0, 
+    save_fig=False, fig_name="plot.png"):
     """
     This function takes in an orders file and execute trades based on the file
 
@@ -132,9 +133,13 @@ def market_simulator(orders_file, start_val=1000000, daily_rf=0.0, samples_per_y
     print ("Final Portfolio Value: {}".format(portvals.iloc[-1, -1]))
 
     # Plot the data
-    plot_normalized_data(SPX_prices.join(portvals), "Portfolio vs. SPX", "Date", "Normalized prices")
+    plot_normalized_data(SPX_prices.join(portvals), "Portfolio vs. SPX", "Date", "Normalized prices",
+        save_fig=save_fig, fig_name=fig_name)
 
 
 if __name__ == "__main__":
-    #market_simulator(orders_file="./orders/orders.csv")
-    market_simulator(orders_file="../02b_event_analyzer/df_trades.csv")
+    market_simulator(orders_file="./orders/orders.csv", save_fig=True, fig_name="orders.png")
+    market_simulator(orders_file="../02b_event_analyzer/df_trades.csv", 
+        save_fig=True, fig_name="df_trades.png")
+    market_simulator(orders_file="../02b_event_analyzer/df_trades_bollinger.csv", 
+        save_fig=True, fig_name="df_trades_bollinger.png")
