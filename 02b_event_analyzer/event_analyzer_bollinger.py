@@ -198,3 +198,5 @@ if __name__ == "__main__":
                 output_filename="bollinger_event_chart.pdf", market_neutral=True, error_bars=True,
                 market_sym="SPY")
     
+    # Output the event as trades to be fed into marketsim
+    df_trades = output_events_as_trades(df_events, "df_trades_bollinger.csv")
